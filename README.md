@@ -1,4 +1,4 @@
-# AITrainingEnv
+# AI Training RL
 
-SDL3 + ImGui base (Commit 0)
+SDL3 + ImGui base 
 Build with: python build.py
