@@ -1,1 +1,1 @@
-// Q-learning implementation
+// Q-learning core training loop
