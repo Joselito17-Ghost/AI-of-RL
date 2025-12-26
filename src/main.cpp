@@ -1,15 +1,52 @@
-
 #include <SDL3/SDL.h>
+#include <iostream>
+
 #include "imgui.h"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
 
+#include "env/grid_env.h"
+#include "rl/qlearning.h"
+
+// ===============================
+// Q-LEARNING TRAINING FUNCTION
+// ===============================
+void train_qlearning() {
+    GridEnv env(5, 5);
+    QLearning agent(25, 4);
+
+    for (int episode = 0; episode < 500; episode++) {
+        int s = env.reset();
+        bool done = false;
+
+        while (!done) {
+            int a = agent.act(s);
+            StepResult r = env.step(a);
+            agent.update(s, a, r.reward, r.next_state);
+            s = r.next_state;
+            done = r.done;
+        }
+    }
+
+    std::cout << "[RL] Training finished successfully." << std::endl;
+}
+
+// ===============================
+// MAIN (SDL3 + IMGUI)
+// ===============================
 int main(int, char**) {
+    // --- SDL INIT ---
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_Window* window = SDL_CreateWindow("AI Training Env", 800, 600, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow(
+        "AI Training Env",
+        800, 600,
+        SDL_WINDOW_RESIZABLE
+    );
+
     SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
 
+    // --- IMGUI INIT ---
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
@@ -18,8 +55,12 @@ int main(int, char**) {
     ImGui_ImplSDLRenderer3_Init(renderer);
 
     bool running = true;
+    bool training_done = false;
     SDL_Event e;
 
+    // ===============================
+    // MAIN LOOP
+    // ===============================
     while (running) {
         while (SDL_PollEvent(&e)) {
             ImGui_ImplSDL3_ProcessEvent(&e);
@@ -31,9 +72,20 @@ int main(int, char**) {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Init");
-        ImGui::Text("SDL3 + ImGui OK");
+        // -------- UI --------
+        ImGui::Begin("AI Training");
+
+        if (ImGui::Button("Start Q-Learning")) {
+            train_qlearning();
+            training_done = true;
+        }
+
+        if (training_done) {
+            ImGui::Text("Training finished!");
+        }
+
         ImGui::End();
+        // --------------------
 
         ImGui::Render();
         SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
@@ -42,6 +94,7 @@ int main(int, char**) {
         SDL_RenderPresent(renderer);
     }
 
+    // --- CLEANUP ---
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
@@ -49,5 +102,6 @@ int main(int, char**) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
     return 0;
 }
