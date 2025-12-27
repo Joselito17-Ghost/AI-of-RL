@@ -7,6 +7,7 @@
 
 #include "env/grid_env.h"
 #include "rl/qlearning.h"
+#include "rl/trainer.h"
 
 // ===============================
 // Q-LEARNING TRAINING FUNCTION
@@ -74,6 +75,16 @@ int main(int, char**) {
 
         // -------- UI --------
         ImGui::Begin("AI Training");
+              static bool headless = false;
+              static float avg_reward = 0.0f;
+
+                 ImGui::Checkbox("Headless training (no render)", &headless);
+
+                 if (ImGui::Button("Train (1000 episodes)")) {
+                 avg_reward = train_qlearning(headless, 1000);
+                 }
+
+        ImGui::Text("Average reward: %.3f", avg_reward);
 
         if (ImGui::Button("Start Q-Learning")) {
             train_qlearning();
@@ -83,6 +94,16 @@ int main(int, char**) {
         if (training_done) {
             ImGui::Text("Training finished!");
         }
+        ImGui::SameLine();
+
+        // ===== Q-TABLE I/O =====
+         if (ImGui::Button("Save Q-table")) {
+            save_agent_qtable("qtable.bin");
+             }
+            ImGui::SameLine();
+            if (ImGui::Button("Load Q-table")) {
+               load_agent_qtable("qtable.bin");
+            }
 
         ImGui::End();
         // --------------------

@@ -7,6 +7,9 @@ public:
     QLearning(int states, int actions);
     int act(int state);
     void update(int s, int a, float r, int s2);
+    const std::vector<float>& table() const { return Q; }
+    std::vector<float>& table_mut() { return Q; }
+
 
 private:
     int n_states, n_actions;
