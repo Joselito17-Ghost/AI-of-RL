@@ -9,34 +9,10 @@
 #include "rl/qlearning.h"
 #include "rl/trainer.h"
 
-// ===============================
-// Q-LEARNING TRAINING FUNCTION
-// ===============================
-void train_qlearning() {
-    GridEnv env(5, 5);
-    QLearning agent(25, 4);
-
-    for (int episode = 0; episode < 500; episode++) {
-        int s = env.reset();
-        bool done = false;
-
-        while (!done) {
-            int a = agent.act(s);
-            StepResult r = env.step(a);
-            agent.update(s, a, r.reward, r.next_state);
-            s = r.next_state;
-            done = r.done;
-        }
-    }
-
-    std::cout << "[RL] Training finished successfully." << std::endl;
-}
-
-// ===============================
-// MAIN (SDL3 + IMGUI)
-// ===============================
 int main(int, char**) {
-    // --- SDL INIT ---
+    // ===============================
+    // SDL INIT
+    // ===============================
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_Window* window = SDL_CreateWindow(
@@ -47,7 +23,9 @@ int main(int, char**) {
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
 
-    // --- IMGUI INIT ---
+    // ===============================
+    // IMGUI INIT
+    // ===============================
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
@@ -55,8 +33,16 @@ int main(int, char**) {
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
 
+    // ===============================
+    // RL OBJECTS
+    // ===============================
+    GridEnv env(5, 5);
+    QLearning agent(25, 4);
+    Trainer trainer(env, agent);
+
     bool running = true;
     bool training_done = false;
+
     SDL_Event e;
 
     // ===============================
@@ -73,41 +59,26 @@ int main(int, char**) {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        // -------- UI --------
+        // ===============================
+        // UI
+        // ===============================
         ImGui::Begin("AI Training");
-              static bool headless = false;
-              static float avg_reward = 0.0f;
 
-                 ImGui::Checkbox("Headless training (no render)", &headless);
-
-                 if (ImGui::Button("Train (1000 episodes)")) {
-                 avg_reward = train_qlearning(headless, 1000);
-                 }
-
-        ImGui::Text("Average reward: %.3f", avg_reward);
-
-        if (ImGui::Button("Start Q-Learning")) {
-            train_qlearning();
+        if (ImGui::Button("Train (1000 episodes)")) {
+            trainer.train(1000);
+            trainer.saveRewardsCSV("training_rewards.csv");
             training_done = true;
         }
 
         if (training_done) {
             ImGui::Text("Training finished!");
         }
-        ImGui::SameLine();
-
-        // ===== Q-TABLE I/O =====
-         if (ImGui::Button("Save Q-table")) {
-            save_agent_qtable("qtable.bin");
-             }
-            ImGui::SameLine();
-            if (ImGui::Button("Load Q-table")) {
-               load_agent_qtable("qtable.bin");
-            }
 
         ImGui::End();
-        // --------------------
 
+        // ===============================
+        // RENDER
+        // ===============================
         ImGui::Render();
         SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
         SDL_RenderClear(renderer);
@@ -115,7 +86,9 @@ int main(int, char**) {
         SDL_RenderPresent(renderer);
     }
 
-    // --- CLEANUP ---
+    // ===============================
+    // CLEANUP
+    // ===============================
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();

@@ -1,7 +1,17 @@
 #pragma once
+#include <vector>
 
-float train_qlearning(bool headless, int episodes);
+class GridEnv;
+class QLearning;
 
-// Sauvegarde / chargement Q-table
-void save_agent_qtable(const char* path);
-bool load_agent_qtable(const char* path);
+class Trainer {
+public:
+    Trainer(GridEnv& env, QLearning& agent);
+    void train(int episodes);
+    void saveRewardsCSV(const char* filename);
+
+private:
+    GridEnv& env;
+    QLearning& agent;
+    std::vector<float> rewards;
+};
